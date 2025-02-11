@@ -3,10 +3,14 @@
 import { Button, Layout, Menu } from "antd";
 import { Content, Header } from "antd/es/layout/layout";
 import {
+  EditOutlined,
+  EyeOutlined,
   FileTextOutlined,
   HomeOutlined,
   LaptopOutlined,
+  MessageOutlined,
   NotificationOutlined,
+  PlusCircleOutlined,
   QrcodeOutlined,
   ScheduleOutlined,
   UserOutlined,
@@ -18,6 +22,9 @@ import ActivePassesComponent from "./ActivePassesComponent";
 import AllVenuesComponent from "./AllVenuesComponent";
 import QRCodeGeneratorComponent from "./QRCodeGeneratorComponent";
 import TncsComponent from "./TncsComponent";
+import ViewVenuesComponent from "./ViewVenuesComponent";
+import AddVenueComponent from "./AddVenueComponent";
+import MessagesComponent from "./MessagesComponent";
 
 const HomepageComponent = () => {
   const [user, setUser] = useState(null);
@@ -26,9 +33,18 @@ const HomepageComponent = () => {
   const menuItems = [
     { key: "1", icon: <UserOutlined />, label: "All users" },
     { key: "2", icon: <ScheduleOutlined />, label: "Active passes" },
-    { key: "3", icon: <HomeOutlined />, label: "All venues" },
-    { key: "4", icon: <QrcodeOutlined />, label: "QR code generator" },
-    { key: "5", icon: <FileTextOutlined />, label: "Terms and conditions" },
+    { key: "3", icon: <MessageOutlined />, label: "All messages" },
+    {
+      key: "4",
+      icon: <HomeOutlined />,
+      label: "Venues",
+      children: [
+        { key: "4-1", icon: <EyeOutlined />, label: "View and edit" },
+        { key: "4-2", icon: <PlusCircleOutlined />, label: "Add venue" },
+      ],
+    },
+    { key: "5", icon: <QrcodeOutlined />, label: "QR code generator" },
+    { key: "6", icon: <FileTextOutlined />, label: "Terms and conditions" },
   ];
 
   const renderContent = () => {
@@ -38,10 +54,16 @@ const HomepageComponent = () => {
       case "2":
         return <ActivePassesComponent />;
       case "3":
-        return <AllVenuesComponent />;
+        return <MessagesComponent />;
       case "4":
-        return <QRCodeGeneratorComponent />;
+        return <AllVenuesComponent />;
+      case "4-1":
+        return <ViewVenuesComponent />;
+      case "4-2":
+        return <AddVenueComponent />;
       case "5":
+        return <QRCodeGeneratorComponent />;
+      case "6":
         return <TncsComponent />;
       default:
         return <AllUsersComponent />;

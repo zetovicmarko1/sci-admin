@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Layout, Menu } from "antd";
+import { Button, Input, Layout, Menu } from "antd";
 import { Content, Header } from "antd/es/layout/layout";
 import {
   EditOutlined,
@@ -16,7 +16,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import Sider from "antd/es/layout/Sider";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AllUsersComponent from "./AllUsersComponent";
 import ActivePassesComponent from "./ActivePassesComponent";
 import AllVenuesComponent from "./AllVenuesComponent";
@@ -27,8 +27,23 @@ import AddVenueComponent from "./AddVenueComponent";
 import MessagesComponent from "./MessagesComponent";
 
 const HomepageComponent = () => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(false);
   const [selectedKey, setSelectedKey] = useState("1");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [secretKey, setSecretKey] = useState("");
+
+  useEffect(() => {
+    const storedSecretKey = localStorage.getItem("secretKey");
+    const storedLoggedIn = localStorage.getItem("loggedIn");
+
+    if (storedSecretKey && storedLoggedIn === "true") {
+      setSecretKey(storedSecretKey);
+      setUser(true);
+    }
+
+    return () => {};
+  }, []);
 
   const menuItems = [
     { key: "1", icon: <UserOutlined />, label: "All users" },
@@ -47,26 +62,62 @@ const HomepageComponent = () => {
     { key: "6", icon: <FileTextOutlined />, label: "Terms and conditions" },
   ];
 
+  const handleLogin = async () => {
+    if (!username || !password) {
+      alert("Please enter a username and password");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser(true);
+        setSecretKey(data.key);
+        localStorage.setItem("loggedIn", true);
+        localStorage.setItem("secretKey", data.key);
+      }
+
+      if (!response.ok) {
+        alert(data.message);
+      }
+    } catch {
+      alert("An error occurred while logging in");
+    }
+  };
+
+  const handleLogout = () => {
+    setUser(false);
+    localStorage.removeItem("loggedIn");
+    localStorage.removeItem("secretKey");
+  };
+
   const renderContent = () => {
     switch (selectedKey) {
       case "1":
-        return <AllUsersComponent />;
+        return <AllUsersComponent secretKey={secretKey} />;
       case "2":
-        return <ActivePassesComponent />;
+        return <ActivePassesComponent secretKey={secretKey} />;
       case "3":
-        return <MessagesComponent />;
+        return <MessagesComponent secretKey={secretKey} />;
       case "4":
-        return <AllVenuesComponent />;
+        return <AllVenuesComponent secretKey={secretKey} />;
       case "4-1":
-        return <ViewVenuesComponent />;
+        return <ViewVenuesComponent secretKey={secretKey} />;
       case "4-2":
-        return <AddVenueComponent />;
+        return <AddVenueComponent secretKey={secretKey} />;
       case "5":
-        return <QRCodeGeneratorComponent />;
+        return <QRCodeGeneratorComponent secretKey={secretKey} />;
       case "6":
-        return <TncsComponent />;
+        return <TncsComponent secretKey={secretKey} />;
       default:
-        return <AllUsersComponent />;
+        return <AllUsersComponent secretKey={secretKey} />;
     }
   };
 
@@ -78,10 +129,10 @@ const HomepageComponent = () => {
       >
         <span>Single Check In</span>
         {user && (
-          <div>
+          <div className="flex items-center gap-x-4">
             {" "}
-            <span>Welcome {user.name}</span>
-            <Button>Log out</Button>
+            <span>Welcome Todd</span>
+            <Button onClick={() => handleLogout()}>Log out</Button>
           </div>
         )}
       </Header>
@@ -95,7 +146,28 @@ const HomepageComponent = () => {
             onClick={(e) => setSelectedKey(e.key)}
           />
         </Sider>
-        <Content className="p-4 bg-gray-100">{renderContent()}</Content>
+        <Content className="p-4 flex justify-center w-100 bg-gray-100">
+          {user ? (
+            renderContent()
+          ) : (
+            <div className="w-1/2 mt-20 flex items-center flex-col gap-y-2">
+              <Input
+                value={username}
+                placeholder="Username"
+                onChange={(e) => setUsername(e.target.value)}
+              />
+              <Input
+                type="password"
+                value={password}
+                placeholder="Password"
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <Button onClick={() => handleLogin()} size="large">
+                Log in
+              </Button>
+            </div>
+          )}
+        </Content>
       </Layout>
     </Layout>
   );

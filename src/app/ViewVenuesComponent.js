@@ -598,7 +598,7 @@ const ViewVenuesComponent = ({ secretKey }) => {
         <Table
           columns={userColumns}
           dataSource={users}
-          loading={loading}
+          loading={userLoading}
           pagination={{
             current: userPagination.current,
             pageSize: userPagination.pageSize,

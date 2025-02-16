@@ -4,7 +4,6 @@ const locationSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     image: { type: String, required: false },
-    address: { type: Object, required: true },
     email: { type: String, required: false },
     phone: { type: String, required: false },
     address: { type: Object, required: true },

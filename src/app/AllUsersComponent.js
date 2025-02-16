@@ -18,7 +18,12 @@ const AllUsersComponent = ({ secretKey }) => {
   const [editedPhone, setEditedPhone] = useState("");
 
   const columns = [
-    { title: "User Id", dataIndex: "_id", key: "_id" },
+    {
+      title: "User Id",
+      dataIndex: "_id",
+      key: "_id",
+      render: (id) => "..." + id.slice(-3),
+    },
     { title: "Name", dataIndex: "name", key: "name" },
     {
       title: "Banned",

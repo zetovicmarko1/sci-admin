@@ -1,8 +1,17 @@
-import { Button, Divider, Input, Modal, Popconfirm, Table } from "antd";
-import { set } from "mongoose";
+import {
+  Button,
+  Divider,
+  Input,
+  Modal,
+  Popconfirm,
+  Table,
+  Tooltip,
+} from "antd";
 import Image from "next/image";
+import { SettingFilled, DeleteFilled, QrcodeOutlined } from "@ant-design/icons";
 
 import React, { useState, useEffect } from "react";
+import QRCode from "qrcode"; // Import qrcode for direct canvas rendering
 
 const ViewVenuesComponent = ({ secretKey }) => {
   const [venues, setVenues] = useState([]);
@@ -33,6 +42,10 @@ const ViewVenuesComponent = ({ secretKey }) => {
   const [editedName, setEditedName] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [qrSize, setQrSize] = useState(1024); // Default size
+  const [selectedQrId, setSelectedQrId] = useState(null);
+
   const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
   const handleFileChange = (e) => {
@@ -54,7 +67,12 @@ const ViewVenuesComponent = ({ secretKey }) => {
   };
 
   const columns = [
-    { title: "Id", dataIndex: "_id", key: "_id" },
+    {
+      title: "Id",
+      dataIndex: "_id",
+      key: "_id",
+      render: (id) => "..." + id.slice(-3),
+    },
     { title: "Name", dataIndex: "name", key: "name" },
     // {
     //   title: "Location",
@@ -85,10 +103,29 @@ const ViewVenuesComponent = ({ secretKey }) => {
       key: "actions",
       render: (record) => (
         <>
-          <Button type="link" onClick={() => openEditModal(record)}>
-            Edit
+          {/* Open the QR Size Selection Modal */}
+          <Button
+            type="link"
+            onClick={() => {
+              setSelectedQrId(record._id); // Store venue ID
+              setIsQrModalOpen(true); // Open modal
+            }}
+          >
+            <Tooltip title="Download QR Code">
+              <QrcodeOutlined />
+            </Tooltip>
           </Button>
           <Divider type="vertical" />
+
+          {/* Edit Venue */}
+          <Button type="link" onClick={() => openEditModal(record)}>
+            <Tooltip title="Venue Properties">
+              <SettingFilled />
+            </Tooltip>
+          </Button>
+          <Divider type="vertical" />
+
+          {/* Delete Venue */}
           <Popconfirm
             title={`Are you sure you want to delete this venue?`}
             onConfirm={() => deleteVenue(record._id)}
@@ -96,7 +133,9 @@ const ViewVenuesComponent = ({ secretKey }) => {
             cancelText="No"
           >
             <Button type="link" danger>
-              Delete
+              <Tooltip title="Delete Venue">
+                <DeleteFilled />
+              </Tooltip>
             </Button>
           </Popconfirm>
         </>
@@ -105,7 +144,12 @@ const ViewVenuesComponent = ({ secretKey }) => {
   ];
 
   const userColumns = [
-    { title: "User Id", dataIndex: "_id", key: "_id" },
+    {
+      title: "User Id",
+      dataIndex: "_id",
+      key: "_id",
+      render: (id) => "..." + id.slice(-3),
+    },
     { title: "Name", dataIndex: "name", key: "name" },
     {
       title: "Banned",
@@ -373,6 +417,57 @@ const ViewVenuesComponent = ({ secretKey }) => {
     }
   }, [viewingUsers]);
 
+  const generateQRCode = async () => {
+    if (!selectedQrId) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/generate-qr/${selectedQrId}`, {
+        method: "GET",
+        headers: {
+          "x-api-key": secretKey,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.url) {
+        throw new Error(data.message || "Failed to generate QR code URL");
+      }
+
+      // Step 1: Create a High-Resolution Canvas
+      const canvas = document.createElement("canvas");
+      const size = Math.min(Math.max(qrSize, 256), 4096); // Ensure valid size (256px - 4096px)
+
+      // Set canvas size for high-resolution QR code
+      canvas.width = size;
+      canvas.height = size;
+
+      // Generate QR code directly on the canvas
+      await QRCode.toCanvas(canvas, data.url, {
+        width: size, // High-resolution size
+        margin: 2, // Adjust margin for better readability
+        errorCorrectionLevel: "H", // High error correction
+      });
+
+      // Step 2: Convert to High-Resolution PNG
+      const pngUrl = canvas.toDataURL("image/png", 1.0);
+
+      // Step 3: Trigger Download
+      const link = document.createElement("a");
+      link.href = pngUrl;
+      link.download = `QR_Code_${selectedQrId}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setIsQrModalOpen(false);
+    } catch (error) {
+      console.error("QR Code generation failed:", error);
+      alert("Failed to generate QR code.");
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="w-100 justify-center">
       <div className="w-100 flex flex-row justify-end items-center gap-2 mb-4">
@@ -403,7 +498,7 @@ const ViewVenuesComponent = ({ secretKey }) => {
 
       {/* Edit Venue Modal */}
       <Modal
-        title="Edit Venue"
+        title="Venue Properties"
         open={isEditModalOpen}
         onCancel={closeEditModal}
         footer={[
@@ -511,6 +606,29 @@ const ViewVenuesComponent = ({ secretKey }) => {
             onChange: (page, pageSize) => fetchUsers(page, pageSize),
           }}
           rowKey="_id"
+        />
+      </Modal>
+
+      <Modal
+        title="Select QR Code Size"
+        open={isQrModalOpen}
+        onCancel={() => setIsQrModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsQrModalOpen(false)}>
+            Cancel
+          </Button>,
+          <Button key="generate" type="primary" onClick={generateQRCode}>
+            Generate & Download
+          </Button>,
+        ]}
+      >
+        <p>Select the size of the QR code (256px - 4096px):</p>
+        <Input
+          type="number"
+          value={qrSize}
+          min={256}
+          max={4096}
+          onChange={(e) => setQrSize(Number(e.target.value))}
         />
       </Modal>
     </div>

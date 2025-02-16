@@ -12,7 +12,12 @@ const ActivePassesComponent = ({ secretKey }) => {
   });
 
   const columns = [
-    { title: "Pass ID", dataIndex: "_id", key: "_id" },
+    {
+      title: "Pass ID",
+      dataIndex: "_id",
+      key: "_id",
+      render: (id) => "..." + id.slice(-3),
+    },
     { title: "Location name", dataIndex: "locationName", key: "locationName" },
     { title: "User's name", dataIndex: "userName", key: "userName" },
     { title: "User's email", dataIndex: "userEmail", key: "userEmail" },

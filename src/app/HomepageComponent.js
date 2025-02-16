@@ -60,9 +60,8 @@ const HomepageComponent = () => {
         { key: "4-2", icon: <PlusCircleOutlined />, label: "Add venue" },
       ],
     },
-    { key: "5", icon: <QrcodeOutlined />, label: "QR code generator" },
-    { key: "6", icon: <FileTextOutlined />, label: "Terms and conditions" },
-    { key: "7", icon: <SettingOutlined />, label: "Other settings" },
+    { key: "5", icon: <FileTextOutlined />, label: "Terms and conditions" },
+    { key: "6", icon: <SettingOutlined />, label: "Other settings" },
   ];
 
   const handleLogin = async () => {
@@ -114,10 +113,8 @@ const HomepageComponent = () => {
       case "4-2":
         return <AddVenueComponent secretKey={secretKey} />;
       case "5":
-        return <QRCodeGeneratorComponent secretKey={secretKey} />;
-      case "6":
         return <TncsComponent secretKey={secretKey} />;
-      case "7":
+      case "6":
         return <OtherSettingsComponent secretKey={secretKey} />;
       default:
         return <AllUsersComponent secretKey={secretKey} />;

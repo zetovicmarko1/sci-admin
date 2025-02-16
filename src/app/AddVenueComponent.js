@@ -21,7 +21,6 @@ const AddVenueComponent = ({ secretKey }) => {
   const [editedEmail, setEditedEmail] = useState("");
   const [editedPhone, setEditedPhone] = useState("");
   const [editedName, setEditedName] = useState("");
-  const [editedImage, setEditedImage] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -346,7 +345,7 @@ const AddVenueComponent = ({ secretKey }) => {
             <img
               src={URL.createObjectURL(selectedFile)}
               alt="Preview"
-              style={{ width: "100px", marginTop: "10px" }}
+              style={{ width: "200px", marginTop: "10px" }}
             />
           )}
           {editingVenue?.image && !selectedFile && (

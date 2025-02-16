@@ -1,4 +1,5 @@
 import { Button, Divider, Input, Modal, Popconfirm, Table } from "antd";
+import { set } from "mongoose";
 import Image from "next/image";
 
 import React, { useState, useEffect } from "react";
@@ -6,6 +7,14 @@ import React, { useState, useEffect } from "react";
 const ViewVenuesComponent = ({ secretKey }) => {
   const [venues, setVenues] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [users, setUsers] = useState([]);
+  const [searchUserTerm, setUserSearchTerm] = useState("");
+  const [userLoading, setUserLoading] = useState(false);
+  const [userPagination, setUserPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -14,14 +23,14 @@ const ViewVenuesComponent = ({ secretKey }) => {
   });
 
   // Edit Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [editingVenue, setEditingVenue] = useState(null);
   const [viewingUsers, setViewingUsers] = useState(null);
   const [editedAddress, setEditedAddress] = useState("");
   const [editedEmail, setEditedEmail] = useState("");
   const [editedPhone, setEditedPhone] = useState("");
   const [editedName, setEditedName] = useState("");
-  const [editedImage, setEditedImage] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -57,12 +66,12 @@ const ViewVenuesComponent = ({ secretKey }) => {
       title: "Users",
       dataIndex: "allUsers",
       key: "allUsers",
-      render: (allUsers) => (
+      render: (allUsers, record) => (
         <>
           <Button
             type="link"
             disabled={allUsers.length < 1}
-            onClick={() => openUsersModal(allUsers)}
+            onClick={() => openUsersModal(record._id)} // Pass the venue ID
           >
             {allUsers.length}
           </Button>
@@ -95,6 +104,97 @@ const ViewVenuesComponent = ({ secretKey }) => {
     },
   ];
 
+  const userColumns = [
+    { title: "User Id", dataIndex: "_id", key: "_id" },
+    { title: "Name", dataIndex: "name", key: "name" },
+    {
+      title: "Banned",
+      dataIndex: "banned",
+      key: "banned",
+      render: (banned) => (banned ? "Yes" : "No"),
+    },
+    { title: "Email", dataIndex: "email", key: "email" },
+    { title: "Phone", dataIndex: "phone", key: "phone" },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (record) => (
+        <>
+          <Divider type="vertical" />
+          <Popconfirm
+            title={`Are you sure you want to ${
+              record.banned ? "unban" : "ban"
+            } this user?`}
+            onConfirm={() => banUser(record._id, !record.banned)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="link" danger={!record.banned}>
+              {record.banned ? "Unban User" : "Ban User"}
+            </Button>
+          </Popconfirm>
+        </>
+      ),
+    },
+  ];
+
+  const banUser = async (id, banned) => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/ban-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": secretKey,
+        },
+        body: JSON.stringify({ id, banned }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(data.message);
+        await fetchUsers(pagination.current, pagination.pageSize);
+      }
+    } catch {
+      alert("An error occurred while updating the user.");
+    }
+    setLoading(false);
+  };
+
+  const fetchUsers = async (page = 1, pageSize = 10) => {
+    if (!viewingUsers) return; // Ensure a venue is selected
+
+    setUserLoading(true);
+    try {
+      const response = await fetch("/api/search-venue-users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": secretKey,
+        },
+        body: JSON.stringify({
+          venueId: viewingUsers,
+          searchUserTerm,
+          page,
+          pageSize,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUsers(data.users);
+        setUserPagination({ current: page, pageSize, total: data.total });
+      } else {
+        alert(data.message);
+      }
+    } catch {
+      alert("An error occurred while fetching users.");
+    }
+    setUserLoading(false);
+  };
+
   // Open Edit Modal and Set User Data
   const openEditModal = (venue) => {
     setEditingVenue(venue);
@@ -102,25 +202,28 @@ const ViewVenuesComponent = ({ secretKey }) => {
     setEditedPhone(venue.phone);
     setEditedName(venue.name);
     setEditedAddress(venue.address);
-    setIsModalOpen(true);
+    setIsEditModalOpen(true);
   };
 
   // Close Edit Modal
   const closeEditModal = () => {
-    setIsModalOpen(false);
+    setIsEditModalOpen(false);
     setEditingVenue(null);
   };
 
   // Open Edit Modal and Set User Data
-  const openUsersModal = (users) => {
-    setViewingUsers(users);
-    setIsModalOpen(true);
+  const openUsersModal = (venueId) => {
+    setViewingUsers(venueId);
+    setIsUserModalOpen(true);
+    console.log("venueId set:", venueId);
   };
 
   // Close Edit Modal
   const closeUsersModal = () => {
-    setIsModalOpen(false);
+    setIsUserModalOpen(false);
     setViewingUsers(null);
+    setUserSearchTerm("");
+    setUsers([]);
   };
 
   // Save Changes
@@ -201,7 +304,7 @@ const ViewVenuesComponent = ({ secretKey }) => {
       }
 
       alert(updateData.message);
-      setIsModalOpen(false);
+      setIsEditModalOpen(false);
       await fetchVenues(pagination.current, pagination.pageSize);
     } catch (error) {
       alert("An error occurred while updating the venue.");
@@ -264,6 +367,12 @@ const ViewVenuesComponent = ({ secretKey }) => {
     fetchVenues();
   }, []);
 
+  useEffect(() => {
+    if (viewingUsers) {
+      fetchUsers(1, userPagination.pageSize);
+    }
+  }, [viewingUsers]);
+
   return (
     <div className="w-100 justify-center">
       <div className="w-100 flex flex-row justify-end items-center gap-2 mb-4">
@@ -295,7 +404,7 @@ const ViewVenuesComponent = ({ secretKey }) => {
       {/* Edit Venue Modal */}
       <Modal
         title="Edit Venue"
-        open={isModalOpen}
+        open={isEditModalOpen}
         onCancel={closeEditModal}
         footer={[
           <Button key="cancel" onClick={closeEditModal}>
@@ -365,6 +474,44 @@ const ViewVenuesComponent = ({ secretKey }) => {
             onChange={(e) => setEditedAddress(e.target.value)}
           /> */}
         </div>
+      </Modal>
+
+      <Modal
+        width={1200}
+        title="View Users"
+        open={isUserModalOpen}
+        onCancel={closeUsersModal}
+        footer={[
+          <Button key="cancel" onClick={closeUsersModal}>
+            Close
+          </Button>,
+        ]}
+      >
+        <div className="w-100 flex flex-row justify-end items-center gap-2 mb-4">
+          <Input
+            value={searchUserTerm}
+            onChange={(e) => setUserSearchTerm(e.target.value)}
+            placeholder="Search users"
+          />
+          <Button
+            color="primary"
+            onClick={() => fetchUsers(1, pagination.pageSize)}
+          >
+            Search
+          </Button>
+        </div>
+        <Table
+          columns={userColumns}
+          dataSource={users}
+          loading={loading}
+          pagination={{
+            current: userPagination.current,
+            pageSize: userPagination.pageSize,
+            total: userPagination.total,
+            onChange: (page, pageSize) => fetchUsers(page, pageSize),
+          }}
+          rowKey="_id"
+        />
       </Modal>
     </div>
   );

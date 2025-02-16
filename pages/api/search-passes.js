@@ -39,7 +39,6 @@ export default async function handler(req, res) {
               $or: [
                 { "user.name": new RegExp(searchTerm, "i") },
                 { "user.email": new RegExp(searchTerm, "i") },
-                { locationId: new RegExp(searchTerm, "i") },
                 { locationName: new RegExp(searchTerm, "i") },
               ],
             }
@@ -89,7 +88,6 @@ export default async function handler(req, res) {
                 $or: [
                   { "user.name": new RegExp(searchTerm, "i") },
                   { "user.email": new RegExp(searchTerm, "i") },
-                  { locationId: new RegExp(searchTerm, "i") },
                   { locationName: new RegExp(searchTerm, "i") },
                 ],
               }

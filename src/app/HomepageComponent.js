@@ -13,6 +13,7 @@ import {
   PlusCircleOutlined,
   QrcodeOutlined,
   ScheduleOutlined,
+  SettingOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import Sider from "antd/es/layout/Sider";
@@ -25,6 +26,7 @@ import TncsComponent from "./TncsComponent";
 import ViewVenuesComponent from "./ViewVenuesComponent";
 import AddVenueComponent from "./AddVenueComponent";
 import MessagesComponent from "./MessagesComponent";
+import OtherSettingsComponent from "./OtherSettingsComponent";
 
 const HomepageComponent = () => {
   const [user, setUser] = useState(false);
@@ -60,6 +62,7 @@ const HomepageComponent = () => {
     },
     { key: "5", icon: <QrcodeOutlined />, label: "QR code generator" },
     { key: "6", icon: <FileTextOutlined />, label: "Terms and conditions" },
+    { key: "7", icon: <SettingOutlined />, label: "Other settings" },
   ];
 
   const handleLogin = async () => {
@@ -116,6 +119,8 @@ const HomepageComponent = () => {
         return <QRCodeGeneratorComponent secretKey={secretKey} />;
       case "6":
         return <TncsComponent secretKey={secretKey} />;
+      case "7":
+        return <OtherSettingsComponent secretKey={secretKey} />;
       default:
         return <AllUsersComponent secretKey={secretKey} />;
     }

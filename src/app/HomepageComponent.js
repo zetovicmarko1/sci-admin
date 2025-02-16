@@ -49,7 +49,7 @@ const HomepageComponent = () => {
 
   const menuItems = [
     { key: "1", icon: <UserOutlined />, label: "All users" },
-    { key: "2", icon: <ScheduleOutlined />, label: "Active passes" },
+    { key: "2", icon: <ScheduleOutlined />, label: "Venue passes" },
     { key: "3", icon: <MessageOutlined />, label: "All messages" },
     {
       key: "4",

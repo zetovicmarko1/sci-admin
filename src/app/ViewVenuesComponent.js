@@ -1,4 +1,5 @@
 import { Button, Divider, Input, Modal, Popconfirm, Table } from "antd";
+import Image from "next/image";
 
 import React, { useState, useEffect } from "react";
 
@@ -348,11 +349,13 @@ const ViewVenuesComponent = ({ secretKey }) => {
               style={{ width: "100px", marginTop: "10px" }}
             />
           )}
-          {editingVenue.image && !selectedFile && (
-            <img
-              src={URL.createObjectURL(editingVenue.image)}
+          {editingVenue?.image && !selectedFile && (
+            <Image
+              src={editingVenue.image}
+              width={100}
+              height={50}
               alt="Preview"
-              style={{ width: "100px", marginTop: "10px" }}
+              className="mt-3"
             />
           )}
 

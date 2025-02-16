@@ -39,7 +39,11 @@ const ActivePassesComponent = ({ secretKey }) => {
             okText="Yes"
             cancelText="No"
           >
-            <Button disabled={record.expired} danger={!record.expired}>
+            <Button
+              type="link"
+              disabled={record.expired}
+              danger={!record.expired}
+            >
               Expire pass
             </Button>
           </Popconfirm>

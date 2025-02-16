@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   gender: String,
   phone: Number || String,
   preferences: [String],
-  picture: [String],
+  picture: String,
   visitedLocations: [String],
   verified: Boolean,
   isTyping: Boolean,

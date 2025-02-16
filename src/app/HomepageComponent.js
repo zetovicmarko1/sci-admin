@@ -109,8 +109,6 @@ const HomepageComponent = () => {
         return <ActivePassesComponent secretKey={secretKey} />;
       case "3":
         return <MessagesComponent secretKey={secretKey} />;
-      case "4":
-        return <AllVenuesComponent secretKey={secretKey} />;
       case "4-1":
         return <ViewVenuesComponent secretKey={secretKey} />;
       case "4-2":

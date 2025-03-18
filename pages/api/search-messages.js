@@ -16,14 +16,14 @@ export default async function handler(req, res) {
 
   await dbConnect();
 
-  const { chatId, searchTerm, page = 1, pageSize = 10 } = req.body;
+  const { chatId, messagesSearchTerm, page = 1, pageSize = 10 } = req.body;
   const skip = (page - 1) * pageSize;
 
   try {
     // Build search query for name or email only
-    const searchQuery = searchTerm
+    const searchQuery = messagesSearchTerm
       ? {
-          messageBody: new RegExp(searchTerm, "i"),
+          messageBody: new RegExp(messagesSearchTerm, "i"),
           chatId: new mongoose.Types.ObjectId(String(chatId)),
         }
       : { chatId: new mongoose.Types.ObjectId(String(chatId)) };

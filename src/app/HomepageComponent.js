@@ -27,6 +27,7 @@ import ViewVenuesComponent from "./ViewVenuesComponent";
 import AddVenueComponent from "./AddVenueComponent";
 import MessagesComponent from "./MessagesComponent";
 import OtherSettingsComponent from "./OtherSettingsComponent";
+import "antd/dist/reset.css";
 
 const HomepageComponent = () => {
   const [user, setUser] = useState(false);
@@ -127,7 +128,7 @@ const HomepageComponent = () => {
         color="primary"
         className="bg-[#F6A350] text-lg text-white font-bold flex justify-between items-center"
       >
-        <span>Single Check In</span>
+        <span>Singles Check In</span>
         {user && (
           <div className="flex items-center gap-x-4">
             {" "}

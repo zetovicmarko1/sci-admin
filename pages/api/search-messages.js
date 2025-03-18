@@ -1,5 +1,5 @@
 import dbConnect from "@/utils/dbConnect";
-import User from "@/models/user";
+import Message from "@/models/message";
 import mongoose from "mongoose";
 
 export default async function handler(req, res) {
@@ -16,38 +16,28 @@ export default async function handler(req, res) {
 
   await dbConnect();
 
-  const { searchTerm, page = 1, pageSize = 10 } = req.body;
+  const { chatId, searchTerm, page = 1, pageSize = 10 } = req.body;
   const skip = (page - 1) * pageSize;
 
   try {
     // Build search query for name or email only
-    let searchQuery = {};
-
-    if (searchTerm) {
-      // Check if searchTerm is a valid ObjectId
-      const isObjectId = mongoose.Types.ObjectId.isValid(searchTerm);
-
-      searchQuery = {
-        $or: [
-          { name: new RegExp(searchTerm, "i") }, // Case-insensitive name search
-          { email: new RegExp(searchTerm, "i") },
-          ...(isObjectId
-            ? [{ _id: new mongoose.Types.ObjectId(String(searchTerm)) }]
-            : []), // Search by ObjectId if valid
-        ],
-      };
-    }
+    const searchQuery = searchTerm
+      ? {
+          messageBody: new RegExp(searchTerm, "i"),
+          chatId: new mongoose.Types.ObjectId(String(chatId)),
+        }
+      : { chatId: new mongoose.Types.ObjectId(String(chatId)) };
 
     // Fetch users with pagination
-    const users = await User.find(searchQuery)
+    const messages = await Message.find(searchQuery)
       .skip(skip)
       .limit(pageSize)
       .exec();
 
     // Get total count (for frontend pagination)
-    const totalUsers = await User.countDocuments(searchQuery);
+    const totalMessages = await Message.countDocuments(searchQuery);
 
-    res.status(200).json({ users, total: totalUsers });
+    res.status(200).json({ messages, total: totalMessages });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" + error });
   }

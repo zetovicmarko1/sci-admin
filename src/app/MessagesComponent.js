@@ -17,8 +17,8 @@ const MessagesComponent = ({ secretKey }) => {
     pageSize: 5,
     total: 0,
   });
-  const [viewingMessages, setViewingMessages] = useState(null);
-  const [openChatId, setOpenChatId] = useState(null);
+  const [viewingMessages, setViewingMessages] = useState([]);
+  const [originalMessages, setOriginalMessages] = useState([]);
 
   // Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,7 +47,7 @@ const MessagesComponent = ({ secretKey }) => {
       key: "messages",
       render: (messages, record) => (
         <>
-          <Button type="link" onClick={() => openEditModal(record._id)}>
+          <Button type="link" onClick={() => openEditModal(messages)}>
             {messages.length}
           </Button>
         </>
@@ -56,12 +56,6 @@ const MessagesComponent = ({ secretKey }) => {
   ];
 
   const messagesColumns = [
-    {
-      title: "Message Id",
-      dataIndex: "_id",
-      key: "_id",
-      render: (id) => "..." + id.slice(-3),
-    },
     {
       title: "Content",
       dataIndex: "messageBody",
@@ -81,9 +75,11 @@ const MessagesComponent = ({ secretKey }) => {
   ];
 
   // Open Edit Modal and Set User Data
-  const openEditModal = (chatId) => {
-    setOpenChatId(chatId);
-    fetchMessages(1, messagesPagination.pageSize, chatId);
+  const openEditModal = (messages) => {
+    setOriginalMessages(messages); // Store all messages
+    setViewingMessages(messages); // Initially set all messages
+    setMessagesPagination({ current: 1, pageSize: 5, total: messages.length });
+    fetchMessages(1, 5, messages);
     setIsModalOpen(true);
   };
 
@@ -91,8 +87,8 @@ const MessagesComponent = ({ secretKey }) => {
   const closeEditModal = () => {
     setMessagesPagination({ current: 1, pageSize: 5, total: 0 });
     setMessagesSearchTerm("");
-    setOpenChatId(null);
-    setViewingMessages(null);
+    setViewingMessages([]);
+    setOriginalMessages([]);
     setIsModalOpen(false);
   };
 
@@ -122,35 +118,38 @@ const MessagesComponent = ({ secretKey }) => {
     setLoading(false);
   };
 
-  const fetchMessages = async (page = 1, pageSize = 5, chatId) => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/search-messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": secretKey,
-        },
-        body: JSON.stringify({
-          chatId,
-          messagesSearchTerm,
-          page,
-          pageSize,
-        }),
-      });
+  const fetchMessages = (
+    page = 1,
+    pageSize = 5,
+    messages = originalMessages
+  ) => {
+    if (!messages) return;
 
-      const data = await response.json();
+    let filteredMessages = [...messages];
 
-      if (response.ok) {
-        setViewingMessages(data.messages);
-        setMessagesPagination({ current: page, pageSize, total: data.total });
-      } else {
-        alert(data.message);
-      }
-    } catch {
-      alert("An error occurred while fetching messages.");
+    // Apply search filter
+    if (messagesSearchTerm) {
+      filteredMessages = filteredMessages.filter((message) =>
+        message.messageBody
+          .toLowerCase()
+          .includes(messagesSearchTerm.toLowerCase())
+      );
     }
-    setLoading(false);
+
+    // Paginate the filtered messages
+    const startIndex = (page - 1) * pageSize;
+    const paginatedMessages = filteredMessages.slice(
+      startIndex,
+      startIndex + pageSize
+    );
+
+    // Update state with paginated messages
+    setViewingMessages(paginatedMessages);
+    setMessagesPagination({
+      current: page,
+      pageSize,
+      total: filteredMessages.length,
+    });
   };
 
   useEffect(() => {
@@ -185,7 +184,6 @@ const MessagesComponent = ({ secretKey }) => {
         rowKey="_id"
       />
 
-      {/* Edit User Modal */}
       <Modal
         width={1200}
         title="View Messages"
@@ -205,7 +203,7 @@ const MessagesComponent = ({ secretKey }) => {
           />
           <Button
             color="primary"
-            onClick={() => fetchMessages(1, pagination.pageSize, openChatId)}
+            onClick={() => fetchMessages(1, messagesPagination.pageSize)}
           >
             Search
           </Button>
@@ -213,16 +211,18 @@ const MessagesComponent = ({ secretKey }) => {
 
         <Table
           columns={messagesColumns}
-          dataSource={viewingMessages}
+          dataSource={viewingMessages?.map((message, index) => ({
+            ...message,
+            key: index,
+          }))}
           loading={loading}
           pagination={{
             current: messagesPagination.current,
             pageSize: messagesPagination.pageSize,
             total: messagesPagination.total,
-            onChange: (page, pageSize) =>
-              fetchMessages(page, pageSize, openChatId),
+            onChange: (page, pageSize) => fetchMessages(page, pageSize),
           }}
-          rowKey="_id"
+          rowKey="key"
         />
       </Modal>
     </div>

@@ -114,7 +114,7 @@ const TncsComponent = ({ secretKey }) => {
     }
   };
   return (
-    <div className="w-100 flex flex-col items-center">
+    <div className="w-100 flex flex-col items-start">
       <h1 className="text-lg mb-4">Update Terms and Conditions</h1>
       <div className="flex flex-row gap-4">
         <div>

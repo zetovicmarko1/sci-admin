@@ -26,6 +26,10 @@ const OtherSettingsComponent = ({ secretKey }) => {
   };
 
   const updateSettings = async () => {
+    if (!price || !expiryTime) {
+      alert("Please fill in all fields");
+      return;
+    }
     try {
       const response = await fetch("/api/update-settings", {
         method: "POST",

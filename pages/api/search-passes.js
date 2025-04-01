@@ -109,10 +109,9 @@ export default async function handler(req, res) {
     ]);
 
     // Step 3: Merge both active and expired passes and apply pagination
-    const allPasses = [...activePasses, ...expiredPasses].slice(
-      skip,
-      skip + pageSize
-    );
+    const allPasses = [...activePasses, ...expiredPasses]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // 👈 Sort newest first
+      .slice(skip, skip + pageSize);
 
     res.status(200).json({
       passes: allPasses,

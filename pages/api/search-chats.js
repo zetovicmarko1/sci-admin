@@ -31,6 +31,7 @@ export default async function handler(req, res) {
 
     // Fetch users with pagination
     const chats = await Chat.find(searchQuery)
+      .sort({ createdAt: -1 }) // Sort by createdAt in descending order
       .skip(skip)
       .limit(pageSize)
       .exec();

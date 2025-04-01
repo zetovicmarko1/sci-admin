@@ -1,6 +1,7 @@
 import dbConnect from "@/utils/dbConnect";
 import User from "@/models/user";
 import { message } from "antd";
+import Purchase from "@/models/purchase";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -24,6 +25,10 @@ export default async function handler(req, res) {
     if (user) {
       user.banned = banned;
       await user.save();
+    }
+
+    if (banned === true) {
+      await Purchase.findOneAndDelete({ userId: id });
     }
 
     res

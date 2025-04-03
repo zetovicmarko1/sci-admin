@@ -6,6 +6,7 @@ const purchaseSchema = new mongoose.Schema({
   locationName: { type: String },
   createdAt: { type: Date, default: Date.now, index: { expires: "12h" } },
   selfieTaken: { type: Boolean, default: false },
+  radius: { type: Number },
   likes: [String],
   likedBy: [String],
   hidden: [String],

@@ -7,6 +7,7 @@ const locationSchema = new mongoose.Schema(
     email: { type: String, required: false },
     phone: { type: String, required: false },
     address: { type: Object, required: true },
+    radius: { type: Number, required: true },
     geo: {
       type: { type: String, enum: ["Point"], required: true },
       coordinates: { type: [Number], required: true },

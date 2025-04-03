@@ -9,6 +9,7 @@ const AddVenueComponent = ({ secretKey }) => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
+  const [radius, setRadius] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [newVenueId, setNewVenueId] = useState(null);
@@ -46,12 +47,11 @@ const AddVenueComponent = ({ secretKey }) => {
           "x-api-key": secretKey,
         },
         body: JSON.stringify({
-          //   id: editingVenue._id,
           email: email,
           phone: phone,
           //   address: editedAddress,
           name: name,
-          //   image: imageUrl, // Save the new image URL
+          radius: radius,
         }),
       });
 
@@ -149,6 +149,12 @@ const AddVenueComponent = ({ secretKey }) => {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
+        />
+        <label>Radius: (in metres)</label>
+        <Input
+          type="number"
+          value={radius}
+          onChange={(e) => setRadius(e.target.value)}
         />
         <label>Email:</label>
         <Input

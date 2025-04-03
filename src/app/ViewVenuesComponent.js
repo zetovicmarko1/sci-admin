@@ -39,6 +39,7 @@ const ViewVenuesComponent = ({ secretKey }) => {
   const [editedAddress, setEditedAddress] = useState("");
   const [editedEmail, setEditedEmail] = useState("");
   const [editedPhone, setEditedPhone] = useState("");
+  const [editedRadius, setEditedRadius] = useState(null);
   const [editedName, setEditedName] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -339,6 +340,7 @@ const ViewVenuesComponent = ({ secretKey }) => {
           address: editedAddress,
           name: editedName,
           image: imageUrl, // Save the new image URL
+          radius: editedRadius,
         }),
       });
 
@@ -529,6 +531,12 @@ const ViewVenuesComponent = ({ secretKey }) => {
             type="text"
             value={editedName}
             onChange={(e) => setEditedName(e.target.value)}
+          />
+          <label>Radius: (in metres)</label>
+          <Input
+            type="number"
+            value={editedRadius}
+            onChange={(e) => setEditedRadius(e.target.value)}
           />
           <label>Email:</label>
           <Input

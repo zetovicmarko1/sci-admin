@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
   await dbConnect();
 
-  const { id, email, phone, image, name } = req.body;
+  const { id, email, phone, image, name, radius } = req.body;
 
   try {
     const location = await Location.findById(id);
@@ -27,6 +27,7 @@ export default async function handler(req, res) {
     location.phone = phone;
     location.image = image;
     location.name = name;
+    location.radius = radius;
     await location.save();
 
     res.status(200).json({ message: "Location updated successfully" });

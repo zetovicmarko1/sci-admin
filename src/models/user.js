@@ -10,7 +10,6 @@ const userSchema = new mongoose.Schema({
   preferences: [String],
   picture: String,
   verified: Boolean,
-  isTyping: Boolean,
   verificationString: String,
   verificationExpires: Date,
   birthday: Date,

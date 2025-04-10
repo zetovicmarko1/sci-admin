@@ -10,7 +10,7 @@ import {
 import Image from "next/image";
 import { SettingFilled, DeleteFilled, QrcodeOutlined } from "@ant-design/icons";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import QRCode from "qrcode"; // Import qrcode for direct canvas rendering
 
 const ViewVenuesComponent = ({ secretKey }) => {
@@ -46,6 +46,12 @@ const ViewVenuesComponent = ({ secretKey }) => {
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [qrSize, setQrSize] = useState(1024); // Default size
   const [selectedQrId, setSelectedQrId] = useState(null);
+  const addressInputRef = useRef(null);
+  const autocompleteRef = useRef(null);
+  const [latLng, setLatLng] = useState(null);
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [postcode, setPostcode] = useState("");
 
   const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -97,8 +103,9 @@ const ViewVenuesComponent = ({ secretKey }) => {
         </>
       ),
     },
-    { title: "Email", dataIndex: "email", key: "email" },
-    { title: "Phone", dataIndex: "phone", key: "phone" },
+    { title: "City", dataIndex: "city", key: "city" },
+    { title: "State", dataIndex: "state", key: "state" },
+    { title: "Postcode", dataIndex: "postcode", key: "postcode" },
     {
       title: "Actions",
       key: "actions",
@@ -247,6 +254,11 @@ const ViewVenuesComponent = ({ secretKey }) => {
     setEditedPhone(venue.phone);
     setEditedName(venue.name);
     setEditedAddress(venue.address);
+    setEditedRadius(venue.radius);
+    setState(venue.state);
+    setCity(venue.city);
+    setPostcode(venue.postcode);
+    setLatLng({ lat: venue.geo.coordinates[1], lng: venue.geo.coordinates[0] });
     setIsEditModalOpen(true);
   };
 
@@ -273,6 +285,19 @@ const ViewVenuesComponent = ({ secretKey }) => {
 
   // Save Changes
   const saveChanges = async () => {
+    if (
+      !editingVenue._id ||
+      !editedRadius ||
+      !editedName ||
+      latLng === null ||
+      !state ||
+      !city ||
+      !postcode ||
+      !editedAddress
+    ) {
+      alert("Please fill in all required fields.");
+      return;
+    }
     if (!editingVenue) return;
     setUploading(true);
 
@@ -341,6 +366,11 @@ const ViewVenuesComponent = ({ secretKey }) => {
           name: editedName,
           image: imageUrl, // Save the new image URL
           radius: editedRadius,
+          lat: latLng.lat,
+          lng: latLng.lng,
+          state: state,
+          city: city,
+          postcode: postcode,
         }),
       });
 
@@ -470,6 +500,58 @@ const ViewVenuesComponent = ({ secretKey }) => {
     setLoading(false);
   };
 
+  useEffect(() => {
+    if (isEditModalOpen && window.google && addressInputRef.current) {
+      if (autocompleteRef.current) {
+        autocompleteRef.current.unbindAll();
+      }
+
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(
+        addressInputRef.current.input,
+        {
+          types: ["geocode"],
+        }
+      );
+
+      autocompleteRef.current.addListener("place_changed", () => {
+        const place = autocompleteRef.current.getPlace();
+
+        if (!place.geometry || !place.geometry.location) return;
+
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        const formattedAddress = place.formatted_address;
+
+        // Extract components
+        const components = place.address_components;
+        let localCity = "";
+        let localState = "";
+        let localPostcode = "";
+
+        components.forEach((component) => {
+          const types = component.types;
+
+          if (types.includes("locality")) {
+            localCity = component.long_name;
+          }
+          if (types.includes("administrative_area_level_1")) {
+            localState = component.short_name; // or long_name if you prefer full name
+          }
+          if (types.includes("postal_code")) {
+            localPostcode = component.long_name;
+          }
+        });
+
+        // Update states
+        setEditedAddress(formattedAddress);
+        setLatLng({ lat, lng });
+        setCity(localCity);
+        setState(localState);
+        setPostcode(localPostcode);
+      });
+    }
+  }, [isEditModalOpen]);
+
   return (
     <div className="w-100 justify-center">
       <div className="w-100 flex flex-row justify-end items-center gap-2 mb-4">
@@ -517,7 +599,12 @@ const ViewVenuesComponent = ({ secretKey }) => {
                 editedPhone !== editingVenue?.phone ||
                 editedName !== editingVenue?.name ||
                 selectedFile ||
-                editedAddress !== editingVenue?.address
+                editedAddress !== editingVenue?.address ||
+                editedRadius !== editingVenue?.radius ||
+                latLng !== null ||
+                state !== editingVenue?.state ||
+                city !== editingVenue?.city ||
+                postcode !== editingVenue?.postcode
               )
             }
           >
@@ -526,13 +613,13 @@ const ViewVenuesComponent = ({ secretKey }) => {
         ]}
       >
         <div className="flex flex-col gap-4">
-          <label>Name:</label>
+          <label>Name: (required)</label>
           <Input
             type="text"
             value={editedName}
             onChange={(e) => setEditedName(e.target.value)}
           />
-          <label>Radius: (in metres)</label>
+          <label>Radius: (in metres) (required)</label>
           <Input
             type="number"
             value={editedRadius}
@@ -549,6 +636,13 @@ const ViewVenuesComponent = ({ secretKey }) => {
             type="number"
             value={editedPhone}
             onChange={(e) => setEditedPhone(e.target.value)}
+          />
+          <label>Address: (required)</label>
+          <Input
+            ref={addressInputRef}
+            value={editedAddress}
+            onChange={(e) => setEditedAddress(e.target.value)}
+            placeholder="Search for an address"
           />
           <label>Upload Image:</label>
           <Input type="file" accept="image/*" onChange={handleFileChange} />
@@ -570,12 +664,6 @@ const ViewVenuesComponent = ({ secretKey }) => {
               className="mt-3"
             />
           )}
-
-          {/* <label>Address:</label>
-          <Input
-            value={editedAddress}
-            onChange={(e) => setEditedAddress(e.target.value)}
-          /> */}
         </div>
       </Modal>
 

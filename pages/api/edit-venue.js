@@ -15,7 +15,20 @@ export default async function handler(req, res) {
 
   await dbConnect();
 
-  const { id, email, phone, image, name, radius } = req.body;
+  const {
+    id,
+    email,
+    phone,
+    image,
+    name,
+    radius,
+    lat,
+    lng,
+    address,
+    postcode,
+    state,
+    city,
+  } = req.body;
 
   try {
     const location = await Location.findById(id);
@@ -28,6 +41,12 @@ export default async function handler(req, res) {
     location.image = image;
     location.name = name;
     location.radius = radius;
+    location.geo.coordinates[0] = lng;
+    location.geo.coordinates[1] = lat;
+    location.address = address;
+    location.postcode = postcode;
+    location.state = state;
+    location.city = city;
     await location.save();
 
     res.status(200).json({ message: "Location updated successfully" });

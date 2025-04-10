@@ -15,13 +15,31 @@ export default async function handler(req, res) {
 
   await dbConnect();
 
-  const { email, phone, name, ...otherData } = req.body;
+  const {
+    email,
+    phone,
+    name,
+    lat,
+    lng,
+    radius,
+    address,
+    postcode,
+    state,
+    city,
+    ...otherData
+  } = req.body;
 
   try {
     const newLocation = new Location({
       email: email,
       phone: phone,
       name: name,
+      geo: { coordinates: [lng, lat], type: "Point" },
+      radius: radius,
+      address: address,
+      postcode: postcode,
+      state: state,
+      city: city,
       ...otherData,
     });
     await newLocation.save();

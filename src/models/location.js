@@ -6,7 +6,10 @@ const locationSchema = new mongoose.Schema(
     image: { type: String, required: false },
     email: { type: String, required: false },
     phone: { type: String, required: false },
-    address: { type: Object, required: true },
+    address: { type: String, required: true },
+    state: { type: String, required: true },
+    city: { type: String, required: true },
+    postcode: { type: String, required: true },
     radius: { type: Number, required: true },
     geo: {
       type: { type: String, enum: ["Point"], required: true },

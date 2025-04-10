@@ -17,6 +17,71 @@ const AllUsersComponent = ({ secretKey }) => {
   const [editedEmail, setEditedEmail] = useState("");
   const [editedPhone, setEditedPhone] = useState("");
 
+  const exportUsersToCSV = async () => {
+    let usersToExport = [];
+
+    try {
+      const response = await fetch("/api/search-users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": secretKey,
+        },
+        body: JSON.stringify({ searchTerm: "", page: 1, pageSize: null }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        usersToExport = data.users;
+      } else {
+        alert(data.message);
+      }
+    } catch {
+      alert("An error occurred while exporting users.");
+    }
+    if (!usersToExport || usersToExport.length === 0) {
+      alert("No users to export.");
+      return;
+    }
+
+    const headers = [
+      "Id",
+      "Name",
+      "Email",
+      "Phone",
+      "Gender",
+      "Pronouns",
+      "Birthday",
+    ];
+
+    const rows = usersToExport.map((user) => [
+      user._id,
+      user.name,
+      user.email || "",
+      user.phone || "",
+      user.gender || "",
+      user.pronouns || "",
+      user.birthday || "",
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers, ...rows]
+        .map((e) =>
+          e.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+        )
+        .join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "users_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const columns = [
     {
       title: "User Id",
@@ -175,6 +240,9 @@ const AllUsersComponent = ({ secretKey }) => {
           onClick={() => fetchUsers(1, pagination.pageSize)}
         >
           Search
+        </Button>
+        <Button onClick={exportUsersToCSV} type="default">
+          Export All Users
         </Button>
       </div>
       <Table

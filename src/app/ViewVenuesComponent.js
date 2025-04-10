@@ -73,6 +73,77 @@ const ViewVenuesComponent = ({ secretKey }) => {
     }
   };
 
+  const exportVenuesToCSV = async () => {
+    let venuesToExport = [];
+
+    try {
+      const response = await fetch("/api/search-venues", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": secretKey,
+        },
+        body: JSON.stringify({ searchTerm: "", page: 1, pageSize: null }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        venuesToExport = data.locations;
+      } else {
+        alert(data.message);
+      }
+    } catch {
+      alert("An error occurred while exporting venues.");
+    }
+    if (!venues || venues.length === 0) {
+      alert("No venues to export.");
+      return;
+    }
+
+    const headers = [
+      "Id",
+      "Name",
+      "Email",
+      "Phone",
+      "City",
+      "State",
+      "Postcode",
+      "Address",
+      "Latitude",
+      "Longitude",
+    ];
+
+    const rows = venuesToExport.map((venue) => [
+      venue._id,
+      venue.name,
+      venue.email || "",
+      venue.phone || "",
+      venue.city || "",
+      venue.state || "",
+      venue.postcode || "",
+      venue.address || "",
+      venue.geo?.coordinates?.[1] || "", // lat
+      venue.geo?.coordinates?.[0] || "", // lng
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers, ...rows]
+        .map((e) =>
+          e.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+        )
+        .join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "venues_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const columns = [
     {
       title: "Id",
@@ -565,6 +636,9 @@ const ViewVenuesComponent = ({ secretKey }) => {
           onClick={() => fetchVenues(1, pagination.pageSize)}
         >
           Search
+        </Button>
+        <Button onClick={exportVenuesToCSV} type="default">
+          Export All Venues
         </Button>
       </div>
       <Table
